@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RDX Master Studio & Jatka Core</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --sidebar-bg: #f9fafb;
+            --border-color: #e5e7eb;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --accent-blue: #2563eb;
+            --accent-orange: #f97316;
+            --hover-bg: #f3f4f6;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #sidebar-tab {
+            position: absolute;
+            left: 0;
+            top: 20px;
+            background-color: var(--accent-blue);
+            color: white;
+            padding: 10px 8px;
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
+            cursor: pointer;
+            z-index: 12;
+            font-size: 0.85rem;
+            font-weight: bold;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            letter-spacing: 1px;
+            transition: background 0.2s;
+        }
+
+        #sidebar-tab:hover {
+            background-color: #1d4ed8;
+        }
+
+        #sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            position: absolute;
+            height: 100%;
+            z-index: 15;
+            transform: translateX(-280px);
+            box-shadow: 4px 0 15px rgba(0,0,0,0.05);
+        }
+
+        body.sidebar-open #sidebar {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--accent-blue);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 10px;
+            margin: 0;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .sidebar-menu li {
+            padding: 12px 15px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-menu li:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .sidebar-menu li.active {
+            background-color: #e0e7ff;
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        .main-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+        }
+
+        .view-panel {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+
+        .view-panel.active {
+            display: flex;
+        }
+
+        .chat-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-history {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            max-width: 75%;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .message.user {
+            background-color: #f3f4f6;
+            align-self: flex-end;
+        }
+
+        .message.bot {
+            background-color: #eff6ff;
+            align-self: flex-start;
+            border: 1px solid #dbeafe;
+        }
+
+        .tts-btn {
+            background: none;
+            border: none;
+            color: var(--accent-blue);
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            padding: 0;
+            font-weight: 600;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-color);
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 8px 15px;
+            width: 100%;
+            max-width: 750px;
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        .chat-input {
+            flex-grow: 1;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+            background: transparent;
+            resize: none;
+            height: 24px;
+        }
+
+        .send-btn {
+            background-color: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .studio-content {
+            padding: 30px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .card-box {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .card-box label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .card-box input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .download-btn {
+            background-color: var(--accent-orange);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 14px;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .download-btn:hover {
+            opacity: 0.9;
+        }
+
+        .file-preview-box {
+            border: 1px dashed var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+            text-align: center;
+            color: var(--text-muted);
+            background: #fafafa;
+            margin-top: 20px;
+            min-height: 120px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar-tab" onmouseenter="toggleSidebar(true)">📂 MENU</div>
+
+    <div id="sidebar" onmouseleave="toggleSidebar(false)">
+        <div class="sidebar-header">
+            <span>⚡ RDX Studio Core</span>
+            <span style="font-size: 1rem; cursor: pointer;" onclick="toggleSidebar(false)">✕</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li id="menu-chat" class="active" onclick="switchView('chat')">💬 Jatka Sovereign Chat (Port 8001)[cite: 2]</li>
+            <li id="menu-video" onclick="switchView('video')">🎬 Video Downloader (Port 7860)[cite: 5, 6, 7]</li>
+            <li id="menu-audio" onclick="switchView('audio')">🎵 Audio Downloader (Port 7860)[cite: 5, 6, 7]</li>
+        </ul>
+    </div>
+
+    <div class="main-container">
+
+        <!-- VIEW 1: Jatka Chat (Port 8001) -->
+        <div id="view-chat" class="view-panel active">
+            <div class="chat-header">
+                <span>🚀 RDX Jatka Sovereign Core (Port 8001)[cite: 2]</span>
+                <span style="font-size: 0.85rem; color: var(--text-muted);">Security, Coding & Ollama AI[cite: 2]</span>
+            </div>
+
+            <div class="chat-history" id="chatHistory">
+                <div class="message bot">
+                    जय हो लाडले! झटका इंजन पोर्ट 8001 पर तैयार है। यहाँ चैट, कोडिंग हेल्प और सिक्योरिटी शील्ड मिलेगी[cite: 2]!
+                    <br><button class="tts-btn" onclick="speakText(this)">🔊 सुनें</button>
+                </div>
+            </div>
+
+            <div class="chat-input-area">
+                <div class="input-wrapper">
+                    <textarea id="userInput" class="chat-input" placeholder="Yahan apna prompt, SQL test ya coding sawal likhein..." rows="1" onkeydown="handleKey(event)"></textarea>
+                    <button class="send-btn" onclick="sendJatkaMessage()">➔</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: Video Downloader (Port 7860) -->
+        <div id="view-video" class="view-panel">
+            <div class="chat-header">
+                <span>🎬 RDX AI Studio - Video Downloader (Port 7860)[cite: 5, 6, 7]</span>
+                <span style="font-size: 0.85rem; color: var(--text-muted);">Direct Media Engine</span>
+            </div>
+
+            <div class="studio-content">
+                <div class="card-box">
+                    <label>Video Link (YouTube/Shorts)[cite: 5, 6, 7]</label>
+                    <input type="text" id="videoUrlInput" placeholder="https://www.youtube.com/watch?v=...">
+                </div>
+
+                <button class="download-btn" onclick="sendMediaRequest('video')">Download Video[cite: 5, 6, 7]</button>
+
+                <div class="card-box" style="margin-top: 20px;">
+                    <label>Status[cite: 5, 6, 7]</label>
+                    <input type="text" id="videoStatus" readonly value="Ready for video URL..." style="background: #f3f4f6;">
+                </div>
+
+                <div class="file-preview-box" id="videoPreviewContainer">
+                    📄 Downloaded Video Preview Area[cite: 5, 6, 7]
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: Audio Downloader (Port 7860) -->
+        <div id="view-audio" class="view-panel">
+            <div class="chat-header">
+                <span>🎵 RDX AI Studio - Audio Downloader (Port 7860)[cite: 5, 6, 7]</span>
+                <span style="font-size: 0.85rem; color: var(--text-muted);">Direct Media Engine</span>
+            </div>
+
+            <div class="studio-content">
+                <div class="card-box">
+                    <label>Audio / YouTube Link[cite: 5, 6, 7]</label>
+                    <input type="text" id="audioUrlInput" placeholder="https://www.youtube.com/watch?v=...">
+                </div>
+
+                <button class="download-btn" style="background-color: var(--accent-blue);" onclick="sendMediaRequest('audio')">Download Audio[cite: 5, 6, 7]</button>
+
+                <div class="card-box" style="margin-top: 20px;">
+                    <label>Status[cite: 5, 6, 7]</label>
+                    <input type="text" id="audioStatus" readonly value="Ready for audio URL..." style="background: #f3f4f6;">
+                </div>
+
+                <div class="file-preview-box" id="audioPreviewContainer">
+                    📄 Downloaded Audio Preview Area[cite: 5, 6, 7]
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function toggleSidebar(open) {
+            if(open) {
+                document.body.classList.add('sidebar-open');
+            } else {
+                document.body.classList.remove('sidebar-open');
+            }
+        }
+
+        function switchView(viewName) {
+            document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.sidebar-menu li').forEach(l => l.classList.remove('active'));
+
+            if(viewName === 'chat') {
+                document.getElementById('view-chat').classList.add('active');
+                document.getElementById('menu-chat').classList.add('active');
+            } else if(viewName === 'video') {
+                document.getElementById('view-video').classList.add('active');
+                document.getElementById('menu-video').classList.add('active');
+            } else if(viewName === 'audio') {
+                document.getElementById('view-audio').classList.add('active');
+                document.getElementById('menu-audio').classList.add('active');
+            }
+            toggleSidebar(false);
+        }
+
+        async function sendJatkaMessage() {
+            const inputField = document.getElementById('userInput');
+            const promptText = inputField.value.trim();
+            const history = document.getElementById('chatHistory');
+
+            if (!promptText) return;
+
+            if (promptText.includes("http://") || promptText.includes("https://") || promptText.includes("youtube.com") || promptText.includes("youtu.be")) {
+                alert("Oye laadle! URL yahan Port 8001 par nahi jayega[cite: 2]! Uske liye side menu se 'Video Downloader' ya 'Audio Downloader' chun[cite: 5, 6, 7].");
+                return;
+            }
+
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user';
+            userMsg.innerText = promptText;
+            history.appendChild(userMsg);
+
+            inputField.value = '';
+            history.scrollTop = history.scrollHeight;
+
+            const botMsg = document.createElement('div');
+            botMsg.className = 'message bot';
+            botMsg.innerText = "⚡ Processing through Jatka Core...";
+            history.appendChild(botMsg);
+            history.scrollTop = history.scrollHeight;
+
+            try {
+                const response = await fetch('http://127.0.0.1:8001/api/v1/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: promptText, user_id: "rdx_master" })
+                });
+
+                const data = await response.json();
+                
+                if (data.status === "ATTACK_HANDLED") {
+                    botMsg.innerHTML = `[🛡️️ SHIELD TRIGGERED]<br>${data.message} <br><button class="tts-btn" onclick="speakText(this)">🔊 सुनें</button>`;
+                } else if (data.status === "SUCCESS") {
+                    botMsg.innerHTML = `${escapeHtml(data.response)} <br><button class="tts-btn" onclick="speakText(this)">🔊 सुनें</button>`;
+                } else {
+                    botMsg.innerText = "Error: " + JSON.stringify(data);
+                }
+            } catch (error) {
+                botMsg.innerText = "Error: Port 8001 (Jatka Engine) se connection fail ho gaya[cite: 2]!";
+            }
+            history.scrollTop = history.scrollHeight;
+        }
+
+        function handleKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendJatkaMessage();
+            }
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function speakText(btn) {
+            const text = btn.parentElement.innerText.replace('🔊 सुनें', '').trim();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'hi-IN';
+            window.speechSynthesis.speak(utterance);
+        }
+
+        async function sendMediaRequest(type) {
+            const inputId = type === 'video' ? 'videoUrlInput' : 'audioUrlInput';
+            const statusId = type === 'video' ? 'videoStatus' : 'audioStatus';
+            const previewId = type === 'video' ? 'videoPreviewContainer' : 'audioPreviewContainer';
+
+            const url = document.getElementById(inputId).value.trim();
+            const statusBox = document.getElementById(statusId);
+            const previewBox = document.getElementById(previewId);
+
+            if (!url) {
+                alert("कृपया कोई वैध URL दर्ज करें!");
+                return;
+            }
+
+            let startTime = Date.now();
+            statusBox.value = `processing | 0.0s`;
+            previewBox.innerHTML = `⏳ Downloading ${type} from RDX Studio... Please wait!`;
+
+            let timerInterval = setInterval(() => {
+                let elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                statusBox.value = `processing | ${elapsed}s`;
+            }, 100);
+
+            try {
+                const response = await fetch('http://127.0.0.1:7860/api/v1/media', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url, type: type })
+                });
+
+                const data = await response.json();
+                clearInterval(timerInterval);
+
+                let totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+                statusBox.value = `${type === 'video' ? 'Video' : 'Audio'} successfully downloaded by RDX! (${totalTime}s)`;
+
+                if (type === 'audio') {
+                    previewBox.innerHTML = `
+                        <div style="font-weight: bold; margin-bottom: 10px; color: #10b981;">🎵 Downloaded File: ${data.filename}</div>
+                        <audio controls style="width: 100%; margin-bottom: 10px;">
+                            <source src="${data.file_url}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                        <br><a href="${data.file_url}" target="_blank" class="download-btn" style="width: auto; padding: 8px 16px; font-size: 0.9rem;">Download Audio File ⬇</a>
+                    `;
+                } else {
+                    previewBox.innerHTML = `
+                        <div style="font-weight: bold; margin-bottom: 10px; color: #2563eb;">🎬 Downloaded Video: ${data.filename}</div>
+                        <video controls style="width: 100%; max-height: 250px; border-radius: 6px; background: #000; margin-bottom: 10px;">
+                            <source src="${data.file_url}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <br><a href="${data.file_url}" target="_blank" class="download-btn" style="width: auto; padding: 8px 16px; font-size: 0.9rem;">Download MP4 Video ⬇</a>
+                    `;
+                }
+
+            } catch (error) {
+                clearInterval(timerInterval);
+                statusBox.value = "Connection Error to Port 7860!";
+                previewBox.innerHTML = `❌ Error connecting to RDX AI Studio backend.`;
+            }
+        }
+    </script>
+</body>
+</html>
